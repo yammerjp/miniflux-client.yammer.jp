@@ -9,7 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/cookie": "^0.4.1",
+    "@types/node-fetch": "^2.5.12",
+    "@types/react": "^17.0.19",
+    "cookie": "^0.4.1",
     "next": "11.1.0",
+    "node-fetch": "^2.6.1",
     "react": "17.0.2",
     "react-dom": "17.0.2"
   },
