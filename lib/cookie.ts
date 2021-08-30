@@ -15,6 +15,7 @@ function setCookie(res: NextApiResponse, key: string, value: string) {
     const new_serialized = cookie.serialize(key, value, {
         httpOnly: true,
         // secure: true,
+        sameSite: 'lax',
         expires: new Date(2030, 1, 1)
     })
     res.setHeader('Set-Cookie', new_serialized)

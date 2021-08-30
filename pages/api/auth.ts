@@ -36,8 +36,7 @@ async function errorablePostHandler(req: NextApiRequest, res: NextApiResponse) {
         return
     }
     console.log(`apiKey: ${apiKey}, endpoint: ${endpoint}`)
-    setCookie(res, 'miniflux-api-key', apiKey)
-    setCookie(res, 'miniflux-endpoint', endpoint)
+    setCookie(res, 'miniflux-connection-config', JSON.stringify({apiKey, endpoint}))
     res.status(200).json({logged_in: true})
 }
 

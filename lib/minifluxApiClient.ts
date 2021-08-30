@@ -16,12 +16,13 @@ class MinifluxApiClient {
 }
 
 function MinifluxApiClientGenerator(req: NextApiRequest): {client?: MinifluxApiClient, errorMessage?: string} {
-    const apiKey = getCookie(req, 'miniflux-api-key')
-    const endpoint = getCookie(req, 'miniflux-endpoint')
-    if (!apiKey || !endpoint) {
-        return {errorMessage: 'Need both cookies of api-key and endpoint'}
-    }
-    return {client: new MinifluxApiClient(endpoint, apiKey)}
+    try {
+        const {apiKey, endpoint} = JSON.parse(getCookie(req, 'miniflux-connection-config'))
+        if (typeof apiKey === 'string' && typeof endpoint === 'string') {
+            return {client: new MinifluxApiClient(endpoint, apiKey)}
+        }
+    } catch {}
+    return {errorMessage: 'Need both cookies of api-key and endpoint'}
 }
 
 export {MinifluxApiClient, MinifluxApiClientGenerator}
