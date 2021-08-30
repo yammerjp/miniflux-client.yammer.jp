@@ -10,8 +10,16 @@ class MinifluxApiClient {
     endpoint!: string
     key!: string
     async logged_in() {
-        const res = await fetch(`${this.endpoint}/v1/me`, { headers: { 'X-Auth-Token':  this.key}}).then(res => res.json())
+        const res = await this.sendRequest('/v1/me')
         return (typeof res.id === 'number')
+    }
+    async entries() {
+        const res = await this.sendRequest('/v1/entries?order=published_at&direction=desc')
+        return res
+    }
+
+    private sendRequest(path: string) {
+        return fetch(`${this.endpoint}${path}`, { headers: { 'X-Auth-Token':  this.key}}).then(res => res.json())
     }
 }
 

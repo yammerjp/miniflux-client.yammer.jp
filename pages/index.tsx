@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 export default function Home() {
   const router = useRouter()
   const [loggedIn, setLoggedIn] = useState<boolean | undefined>(undefined)
+  const [entries, setEntries] = useState<any[]>([])
 
   useEffect(() => {
     (async () => {
@@ -17,6 +18,12 @@ export default function Home() {
         return
       }
       setLoggedIn(true)
+      const res = await fetch('/api/entries').then(res => res.json())
+      if (res?.entries?.length > 0) {
+        setEntries(res.entries)
+      } else {
+        return Promise.reject()
+      }
     })().catch(() => {
       router.push('/login')
     });
@@ -41,6 +48,14 @@ export default function Home() {
         ) : (
           <div>
             logged in!
+            {entries.map(e => (<div key={e.id}>
+              <h2>
+                <a href={e.url}>{e.title}</a>
+              </h2>
+              <div>
+                {e.published_at} | {e.feed.site_url.split('/').slice(2).filter(s => s !== '').join('/')} 
+              </div>
+            </div>))}
           </div>
         )}
       </main>
