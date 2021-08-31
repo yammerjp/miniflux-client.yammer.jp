@@ -19,11 +19,16 @@ export default function Home() {
       }
       setLoggedIn(true)
       const res = await fetch('/api/entries').then(res => res.json())
-      if (res?.entries?.length > 0) {
-        setEntries(res.entries)
-      } else {
+      if (!(res?.entries?.length > 0)) {
         return Promise.reject()
       }
+      setEntries(res.entries)
+       await Promise.all(res.entries.map(async entry => {
+        console.log(`fetching... ${entry.url}`)
+        const {image_url} = await fetch('/api/ogimage', { method: "POST", body: JSON.stringify({url: entry.url}),headers: {'Content-Type': 'application/json'}}).then(res => res.json())
+        console.log(`fetched!... ${entry.url}`)
+        setEntries(entries => entries.map(e => e.id === entry.id ? {...e, imageUrl: image_url}: e))
+       }))
     })().catch(() => {
       router.push('/login')
     });
@@ -55,6 +60,7 @@ export default function Home() {
               <div>
                 {e.published_at} | {e.feed.site_url.split('/').slice(2).filter(s => s !== '').join('/')} 
               </div>
+              <div style={{ width: 160, height: 90, backgroundImage: `url(${e.imageUrl || '/image-empty.png'})`, backgroundSize: 'cover', backgroundPosition: 'center center'}}></div>
             </div>))}
           </div>
         )}
