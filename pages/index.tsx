@@ -1,8 +1,8 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 import { useState, useEffect } from 'react'
+import Entries from '../components/Entries'
 
 export default function Home() {
   const router = useRouter()
@@ -22,8 +22,13 @@ export default function Home() {
       if (!(res?.entries?.length > 0)) {
         return Promise.reject()
       }
-      setEntries(res.entries)
-       await Promise.all(res.entries.map(async entry => {
+      const entriesWithDate = res.entries.map(e => {
+        const date = new Date(e.published_at)
+        const dateString = `${date.getFullYear()}/${('00'+(date.getMonth()+1)).slice(-2)}/${('00'+date.getDate()).slice(-2)}`
+        return {...e, dateString}
+      })
+      setEntries(entriesWithDate)
+       await Promise.all(entriesWithDate.map(async entry => {
         console.log(`fetching... ${entry.url}`)
         const {image_url} = await fetch('/api/ogimage', { method: "POST", body: JSON.stringify({url: entry.url}),headers: {'Content-Type': 'application/json'}}).then(res => res.json())
         console.log(`fetched!... ${entry.url}`)
@@ -53,15 +58,7 @@ export default function Home() {
         ) : (
           <div>
             logged in!
-            {entries.map(e => (<div key={e.id}>
-              <h2>
-                <a href={e.url}>{e.title}</a>
-              </h2>
-              <div>
-                {e.published_at} | {e.feed.site_url.split('/').slice(2).filter(s => s !== '').join('/')} 
-              </div>
-              <div style={{ width: 160, height: 90, backgroundImage: `url(${e.imageUrl || '/image-empty.png'})`, backgroundSize: 'cover', backgroundPosition: 'center center'}}></div>
-            </div>))}
+            <Entries entries={entries} />
           </div>
         )}
       </main>
