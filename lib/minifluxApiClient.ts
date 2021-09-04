@@ -13,8 +13,14 @@ class MinifluxApiClient {
         const res = await this.sendRequest('/v1/me')
         return (typeof res.id === 'number')
     }
-    async entries() {
-        const res = await this.sendRequest('/v1/entries?order=published_at&direction=desc')
+    async entries(options?: { before_entry_id: string}) {
+        const queries = {
+            order: 'published_at',
+            direction:'desc',
+            ...options,
+        }
+        const queriesString = Object.keys(queries).map(key => `${key}=${queries[key]}`).join('&')
+        const res = await this.sendRequest(`/v1/entries?${queriesString}`)
         return res
     }
 

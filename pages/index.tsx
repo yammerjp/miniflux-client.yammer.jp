@@ -3,22 +3,58 @@ import { useRouter } from 'next/router'
 import styles from '../styles/Home.module.css'
 import { useState, useEffect } from 'react'
 import Entries from '../components/Entries'
+import LoadinIcon from '../components/LoadingIcon'
 
 export default function Home() {
   const router = useRouter()
   const [loggedIn, setLoggedIn] = useState<boolean | undefined>(undefined)
   const [entries, setEntries] = useState<any[]>([])
+  const [fetching, setFetching] = useState(false)
+
+  const [scrolledRatio, setScrolledRatio] = useState(0)
+  const [scrolledBottom, setScrolledBottom] = useState(false)
+  useEffect(() => {
+    function onScroll() {
+      const height = document.documentElement.scrollHeight - document.documentElement.scrollTop
+      const ratio = document.documentElement.clientHeight / height
+      // console.log(ratio)
+      // console.log(`scrollHeight: ${document.documentElement.scrollHeight}, scrollTop: ${document.documentElement.scrollTop}, clientHeight: ${document.documentElement.clientHeight}`)
+      setScrolledRatio(ratio)
+      setScrolledBottom(ratio > 0.9)
+    }
+    document.addEventListener('scroll', onScroll)
+    return () => document.removeEventListener('scroll', onScroll)
+  }, [])
 
   useEffect(() => {
     (async () => {
-      console.log('try-login')
+      // console.log('try-login')
       const {logged_in}= await fetch('/api/auth').then(res => res.json())
       if (!logged_in) {
         router.push('/login')
         return
       }
       setLoggedIn(true)
-      const res = await fetch('/api/entries').then(res => res.json())
+      return fetchEntries()
+    })().catch(() => {
+      router.push('/login')
+    });
+  }, [])
+
+  useEffect(() => {
+    if(!scrolledBottom) {
+      return
+    }
+    fetchEntries(entries.length > 0 ? entries[entries.length -1].id : undefined)
+  }, [scrolledBottom])
+
+  async function fetchEntries(beforeEntryId?: string) {
+    if (fetching) {
+      return
+    }
+    setFetching(true)
+    const queryString = beforeEntryId !== undefined ? `?before_entry_id=${beforeEntryId}` : ''
+      const res = await fetch(`/api/entries${queryString}`).then(res => res.json())
       if (!(res?.entries?.length > 0)) {
         return Promise.reject()
       }
@@ -27,17 +63,15 @@ export default function Home() {
         const dateString = `${date.getFullYear()}/${('00'+(date.getMonth()+1)).slice(-2)}/${('00'+date.getDate()).slice(-2)}`
         return {...e, dateString}
       })
-      setEntries(entriesWithDate)
+      setEntries(es => [...es, ...entriesWithDate.filter(ew => es.every(e => e.id !== ew.id))])
+       setFetching(false)
        await Promise.all(entriesWithDate.map(async entry => {
-        console.log(`fetching... ${entry.url}`)
+        // console.log(`fetching... ${entry.url}`)
         const {image_url} = await fetch('/api/ogimage', { method: "POST", body: JSON.stringify({url: entry.url}),headers: {'Content-Type': 'application/json'}}).then(res => res.json())
-        console.log(`fetched!... ${entry.url}`)
+        // console.log(`fetched!... ${entry.url}`)
         setEntries(entries => entries.map(e => e.id === entry.id ? {...e, imageUrl: image_url}: e))
        }))
-    })().catch(() => {
-      router.push('/login')
-    });
-  }, [])
+  }
 
   return (
     <div className={styles.container}>
@@ -59,6 +93,7 @@ export default function Home() {
           <div>
             logged in!
             <Entries entries={entries} />
+            <LoadinIcon />
           </div>
         )}
       </main>

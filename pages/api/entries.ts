@@ -25,6 +25,8 @@ async function errorableGettHandler(req: NextApiRequest, res: NextApiResponse) {
         res.status(200).json({logged_in: false})
         return
     }
-    const response = await client.entries()
+    const options = { before_entry_id: `${req.query.before_entry_id}`}
+    const response = await client.entries(options)
+    
     res.status(200).json(response)
 }
